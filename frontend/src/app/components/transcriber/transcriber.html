@@ -1,0 +1,113 @@
+<div class="app-container">
+  <!-- Reset Button -->
+  <button *ngIf="showResetButton" class="reset-btn" (click)="onReset()" aria-label="Reset">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-7 w-7"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M4 4v5h5M20 20v-5h-5M20 4h-5v5M4 20h5v-5"
+      />
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M4 4l1.5 1.5M20 20l-1.5-1.5M20 4l-1.5 1.5M4 20l1.5-1.5"
+      />
+    </svg>
+  </button>
+
+  <!-- 1. Start Screen -->
+  <div
+    *ngIf="currentState() === AppState.START"
+    class="screen fade-in"
+    role="button"
+    tabindex="0"
+    (click)="onStartClick()"
+    (keydown.enter)="onStartClick()"
+    (keydown.space)="onStartClick()"
+  >
+    <h1 class="text-3xl text-white/50 cursor-pointer">Click anywhere to begin</h1>
+  </div>
+
+  <!-- 2. Choice Screen -->
+  <div *ngIf="currentState() === AppState.CHOICE" class="screen fade-in">
+    <div class="flex space-x-8">
+      <button class="choice-btn" (click)="onChooseType()">Type</button>
+      <button class="choice-btn" (click)="onChooseSpeak()">Speak</button>
+    </div>
+  </div>
+
+  <!-- 3. Type Input Screen -->
+  <div *ngIf="currentState() === AppState.TYPE_INPUT" class="screen fade-in">
+    <div class="w-full max-w-2xl text-center">
+      <textarea
+        [(ngModel)]="textInput"
+        class="w-full h-48 bg-transparent text-2xl text-center resize-none focus:outline-none placeholder-white/30 text-white"
+        placeholder="Type something..."
+      ></textarea>
+      <button *ngIf="canProcessText" class="process-btn mt-6" (click)="onProcessText()">
+        Process
+      </button>
+    </div>
+  </div>
+
+  <!-- 4. Speak Input Screen -->
+  <div *ngIf="currentState() === AppState.SPEAK_INPUT" class="screen fade-in">
+    <!-- Recorder UI -->
+    <div *ngIf="speakView() === SpeakView.RECORDER" class="flex flex-col items-center">
+      <div class="record-indicator">
+        <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z"></path>
+        </svg>
+      </div>
+      <p class="text-2xl font-mono mt-4 text-white">{{ formattedTime }}</p>
+      <button class="stop-btn mt-6" (click)="onStopRecording()">Stop</button>
+    </div>
+
+    <!-- Playback UI -->
+    <div *ngIf="speakView() === SpeakView.PLAYBACK" class="flex flex-col items-center">
+      <audio [src]="audioUrl()" controls class="mb-4 audio-player"></audio>
+      <button class="process-btn mt-2" (click)="onProcessAudio()">Process</button>
+    </div>
+  </div>
+
+  <!-- 5. Output Screen -->
+  <div *ngIf="currentState() === AppState.OUTPUT" class="screen fade-in">
+    <div class="w-full max-w-2xl text-center">
+      <!-- Loading Spinner -->
+      <div *ngIf="isProcessing()" class="flex justify-center items-center">
+        <svg
+          class="animate-spin h-8 w-8 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+      </div>
+
+      <!-- Output Text -->
+      <p *ngIf="!isProcessing()" class="text-xl text-white/80 leading-relaxed">
+        {{ outputText() }}
+      </p>
+    </div>
+  </div>
+</div>

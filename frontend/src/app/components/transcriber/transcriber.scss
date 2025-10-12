@@ -1,0 +1,228 @@
+.app-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom right, #0f172a, #1e293b);
+  overflow: hidden;
+}
+
+.reset-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  color: rgba(255, 255, 255, 0.4);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition:
+    color 0.3s ease,
+    opacity 0.3s ease;
+  z-index: 50;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  svg {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
+.screen {
+  text-align: center;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.choice-btn {
+  padding: 1rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  font-size: 1.25rem;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.process-btn {
+  padding: 0.75rem 2rem;
+  background: rgb(99, 102, 241);
+  color: white;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    background: rgb(79, 70, 229);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.record-indicator {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background: rgb(239, 68, 68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse-slow 2s infinite;
+
+  svg {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.stop-btn {
+  padding: 0.75rem 2rem;
+  background: rgb(71, 85, 105);
+  color: white;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    background: rgb(51, 65, 85);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.audio-player {
+  margin-bottom: 1rem;
+  width: 100%;
+  max-width: 400px;
+
+  &::-webkit-media-controls-panel {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+textarea {
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+@media (max-width: 768px) {
+  .choice-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.125rem;
+  }
+
+  .record-indicator {
+    width: 5rem;
+    height: 5rem;
+
+    svg {
+      width: 2rem;
+      height: 2rem;
+    }
+  }
+
+  textarea {
+    font-size: 1.25rem;
+  }
+
+  .reset-btn {
+    top: 1rem;
+    right: 1rem;
+
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .choice-btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .record-indicator {
+    width: 4rem;
+    height: 4rem;
+
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    padding: 0 1rem;
+  }
+
+  textarea {
+    font-size: 1.125rem;
+    height: 10rem;
+  }
+}

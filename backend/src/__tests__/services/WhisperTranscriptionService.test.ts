@@ -1,14 +1,29 @@
 import { WhisperTranscriptionService } from '../../services/WhisperTranscriptionService';
+import { AudioConversionService } from '../../services/AudioConversionService';
 
 // Mock fetch globally
 global.fetch = jest.fn();
 
+// Mock AudioConversionService
+jest.mock('../../services/AudioConversionService');
+
 describe('WhisperTranscriptionService', () => {
   let service: WhisperTranscriptionService;
   const mockApiUrl = 'http://localhost:9000';
+  let mockConvertToMp3: jest.Mock;
 
   beforeEach(() => {
     service = new WhisperTranscriptionService(mockApiUrl);
+    mockConvertToMp3 = jest.fn();
+    
+    // Mock the AudioConversionService instance
+    (AudioConversionService as jest.Mock).mockImplementation(() => ({
+      convertToMp3: mockConvertToMp3,
+    }));
+    
+    // Recreate service with mocked converter
+    service = new WhisperTranscriptionService(mockApiUrl);
+    
     jest.clearAllMocks();
   });
 
@@ -53,6 +68,13 @@ describe('WhisperTranscriptionService', () => {
 
     it('should successfully transcribe audio and return text', async () => {
       const mockTranscription = 'This is a test transcription';
+      
+      // Mock audio conversion
+      mockConvertToMp3.mockResolvedValueOnce({
+        buffer: Buffer.from('converted audio data'),
+        mimetype: 'audio/mpeg',
+        originalname: 'test.mp3',
+      });
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -75,6 +97,13 @@ describe('WhisperTranscriptionService', () => {
 
     it('should handle text/plain response', async () => {
       const mockTranscription = 'Plain text transcription';
+      
+      // Mock audio conversion
+      mockConvertToMp3.mockResolvedValueOnce({
+        buffer: Buffer.from('converted audio data'),
+        mimetype: 'audio/mpeg',
+        originalname: 'test.mp3',
+      });
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -90,6 +119,13 @@ describe('WhisperTranscriptionService', () => {
     });
 
     it('should throw error when Whisper service returns error', async () => {
+      // Mock audio conversion
+      mockConvertToMp3.mockResolvedValueOnce({
+        buffer: Buffer.from('converted audio data'),
+        mimetype: 'audio/mpeg',
+        originalname: 'test.mp3',
+      });
+
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         status: 500,
@@ -103,12 +139,26 @@ describe('WhisperTranscriptionService', () => {
     });
 
     it('should throw error when network request fails', async () => {
+      // Mock audio conversion
+      mockConvertToMp3.mockResolvedValueOnce({
+        buffer: Buffer.from('converted audio data'),
+        mimetype: 'audio/mpeg',
+        originalname: 'test.mp3',
+      });
+
       (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 
       await expect(service.transcribe(mockFile)).rejects.toThrow('Network error');
     });
 
     it('should throw error when response is empty', async () => {
+      // Mock audio conversion
+      mockConvertToMp3.mockResolvedValueOnce({
+        buffer: Buffer.from('converted audio data'),
+        mimetype: 'audio/mpeg',
+        originalname: 'test.mp3',
+      });
+
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         headers: {

@@ -1,20 +1,31 @@
 import { WhisperResponse } from '../types';
 import { logger } from '../utils/logger';
+import { AudioConversionService } from './AudioConversionService';
 
 export class WhisperTranscriptionService {
-  constructor(private whisperUrl: string) {}
+  private audioConverter: AudioConversionService;
+
+  constructor(private whisperUrl: string) {
+    this.audioConverter = new AudioConversionService();
+  }
 
   async transcribe(file: Express.Multer.File): Promise<string> {
     logger.info('Starting Whisper transcription', {
       filename: file.originalname,
       size: file.size,
+      mimetype: file.mimetype,
       whisperUrl: this.whisperUrl,
     });
 
     try {
+      // Convert audio to MP3 format for better compatibility with Whisper
+      const convertedAudio = await this.audioConverter.convertToMp3(file);
+      
       const formData = new FormData();
-      const audioBlob = new Blob([new Uint8Array(file.buffer)], { type: file.mimetype });
-      formData.append('audio_file', audioBlob, file.originalname);
+      const audioBlob = new Blob([new Uint8Array(convertedAudio.buffer)], { 
+        type: convertedAudio.mimetype 
+      });
+      formData.append('audio_file', audioBlob, convertedAudio.originalname);
       formData.append('task', 'transcribe');
       formData.append('output', 'txt');
 

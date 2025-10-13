@@ -37,6 +37,7 @@ export class Transcriber {
   readonly audioBlob = signal<Blob | null>(null);
   readonly audioUrl = signal<string>('');
   readonly recordingTime = signal<number>(0);
+  readonly isCopied = signal<boolean>(false);
 
   private timerInterval: number | null = null;
   private mediaRecorder: MediaRecorder | null = null;
@@ -126,6 +127,25 @@ export class Transcriber {
     });
   }
 
+  async onCopyOutput(): Promise<void> {
+    const text = this.outputText();
+    if (!text) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      this.isCopied.set(true);
+
+      // Reset after 2 seconds
+      setTimeout(() => {
+        this.isCopied.set(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to copy text:', error);
+    }
+  }
+
   onReset(): void {
     this.stopRecording();
     this.clearTimer();
@@ -135,6 +155,7 @@ export class Transcriber {
     this.audioBlob.set(null);
     this.audioUrl.set('');
     this.recordingTime.set(0);
+    this.isCopied.set(false);
     this.speakView.set(SpeakView.RECORDER);
     this.isProcessing.set(false);
     this.transitionTo(AppState.START);

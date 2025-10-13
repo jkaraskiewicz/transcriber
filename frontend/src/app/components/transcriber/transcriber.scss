@@ -169,6 +169,44 @@ textarea {
   }
 }
 
+.copy-btn {
+  padding: 0.375rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.375rem;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.copied {
+    color: rgb(74, 222, 128);
+    border-color: rgb(74, 222, 128);
+    background: rgba(74, 222, 128, 0.1);
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
 @media (max-width: 768px) {
   .choice-btn {
     padding: 0.75rem 1.5rem;

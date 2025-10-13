@@ -32,7 +32,8 @@ export class Transcriber {
   readonly speakView = signal<SpeakView>(SpeakView.RECORDER);
   readonly textInput = signal<string>('');
   readonly isProcessing = signal<boolean>(false);
-  readonly outputText = signal<string>('');
+  readonly inputText = signal<string>(''); // Original/raw text before Gemini processing
+  readonly outputText = signal<string>(''); // Cleaned text after Gemini processing
   readonly audioBlob = signal<Blob | null>(null);
   readonly audioUrl = signal<string>('');
   readonly recordingTime = signal<number>(0);
@@ -78,12 +79,14 @@ export class Transcriber {
       next: (result: TranscriptionResponse) => {
         setTimeout(() => {
           this.isProcessing.set(false);
+          this.inputText.set(result.original);
           this.outputText.set(result.cleaned);
         }, 2000);
       },
       error: () => {
         setTimeout(() => {
           this.isProcessing.set(false);
+          this.inputText.set('');
           this.outputText.set('Error processing text. Please try again.');
         }, 2000);
       },
@@ -109,12 +112,14 @@ export class Transcriber {
       next: (result: TranscriptionResponse) => {
         setTimeout(() => {
           this.isProcessing.set(false);
+          this.inputText.set(result.original);
           this.outputText.set(result.cleaned);
         }, 2000);
       },
       error: () => {
         setTimeout(() => {
           this.isProcessing.set(false);
+          this.inputText.set('');
           this.outputText.set('Error processing audio. Please try again.');
         }, 2000);
       },
@@ -125,6 +130,7 @@ export class Transcriber {
     this.stopRecording();
     this.clearTimer();
     this.textInput.set('');
+    this.inputText.set('');
     this.outputText.set('');
     this.audioBlob.set(null);
     this.audioUrl.set('');

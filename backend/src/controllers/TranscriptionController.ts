@@ -62,7 +62,7 @@ export class TranscriptionController {
         message: 'Transcription and cleanup completed successfully',
       };
 
-      res.status(200).json(response);
+      res.status(201).json(response);
     } catch (error) {
       logger.error('Transcription process failed', error, {
         filename: file.originalname,

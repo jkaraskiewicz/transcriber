@@ -41,6 +41,7 @@ describe('TranscriptionController', () => {
 
     const mockRawTranscription = 'Umm, this is a test transcription, uh, you know.';
     const mockCleanedTranscription = 'This is a test transcription.';
+    const mockIntelligentTranscription = 'This is a test transcription.';
 
     beforeEach(() => {
       mockRequest = {
@@ -51,15 +52,18 @@ describe('TranscriptionController', () => {
     it('should successfully transcribe and cleanup audio', async () => {
       mockWhisperService.transcribe = jest.fn().mockResolvedValue(mockRawTranscription);
       mockGeminiService.cleanupTranscript = jest.fn().mockResolvedValue(mockCleanedTranscription);
+      mockGeminiService.intelligentCleanup = jest.fn().mockResolvedValue(mockIntelligentTranscription);
 
       await controller.transcribeAudio(mockRequest as Request, mockResponse as Response);
 
       expect(mockWhisperService.transcribe).toHaveBeenCalledWith(mockFile);
       expect(mockGeminiService.cleanupTranscript).toHaveBeenCalledWith(mockRawTranscription);
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockGeminiService.intelligentCleanup).toHaveBeenCalledWith(mockRawTranscription);
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
         original: mockRawTranscription,
         cleaned: mockCleanedTranscription,
+        intelligent: mockIntelligentTranscription,
         message: 'Transcription and cleanup completed successfully',
       });
     });
@@ -95,6 +99,7 @@ describe('TranscriptionController', () => {
       const errorMessage = 'Gemini service error';
       mockWhisperService.transcribe = jest.fn().mockResolvedValue(mockRawTranscription);
       mockGeminiService.cleanupTranscript = jest.fn().mockRejectedValue(new Error(errorMessage));
+      mockGeminiService.intelligentCleanup = jest.fn().mockResolvedValue(mockIntelligentTranscription);
 
       await controller.transcribeAudio(mockRequest as Request, mockResponse as Response);
 

@@ -9,12 +9,22 @@ export interface TranscriptionResponse {
   message: string;
 }
 
+// Extend Window interface to include APP_CONFIG
+declare global {
+  interface Window {
+    APP_CONFIG?: {
+      apiUrl: string;
+    };
+  }
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class Transcription {
   private http = inject(HttpClient);
-  private apiUrl = environment.apiUrl;
+  // Use runtime config if available, otherwise fall back to environment
+  private apiUrl = window.APP_CONFIG?.apiUrl || environment.apiUrl;
 
   transcribeAudio(audioBlob: Blob, filename: string): Observable<TranscriptionResponse> {
     const formData = new FormData();

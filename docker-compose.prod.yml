@@ -23,6 +23,8 @@ services:
   frontend:
     image: ghcr.io/jkaraskiewicz/transcriber-frontend:latest
     container_name: transcriber-frontend
+    environment:
+      - BACKEND_URL=${BACKEND_URL:-/api}
     ports:
       - "4206:80"
     networks:

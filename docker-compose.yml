@@ -33,6 +33,8 @@ services:
       dockerfile: Dockerfile
     container_name: transcriber-frontend
     restart: unless-stopped
+    environment:
+      - BACKEND_URL=${BACKEND_URL:-/api}
     ports:
       - "4206:80"
     networks:

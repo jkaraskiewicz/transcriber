@@ -25,6 +25,13 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy built application from builder stage
 COPY --from=builder /app/dist/frontend/browser /usr/share/nginx/html
 
+# Copy config template for runtime configuration
+COPY src/assets/config.template.js /usr/share/nginx/html/assets/config.template.js
+
+# Copy and prepare entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Expose port
 EXPOSE 80
 
@@ -32,5 +39,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use custom entrypoint to inject runtime config
+CMD ["/docker-entrypoint.sh"]

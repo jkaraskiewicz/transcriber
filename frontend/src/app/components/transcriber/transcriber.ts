@@ -106,27 +106,7 @@ export class Transcriber {
       return;
     }
 
-    this.transitionTo(AppState.OUTPUT);
-    this.isProcessing.set(true);
-
-    this.transcriptionService.cleanupText(text).subscribe({
-      next: (result: TranscriptionResponse) => {
-        setTimeout(() => {
-          this.isProcessing.set(false);
-          this.inputText.set(result.original);
-          this.outputText.set(result.cleaned);
-          this.intelligentText.set(result.intelligent || result.cleaned);
-        }, 2000);
-      },
-      error: () => {
-        setTimeout(() => {
-          this.isProcessing.set(false);
-          this.inputText.set('');
-          this.outputText.set('Error processing text. Please try again.');
-          this.intelligentText.set('');
-        }, 2000);
-      },
-    });
+    this.processWithTranscription(() => this.transcriptionService.cleanupText(text));
   }
 
   onStopRecording(): void {
@@ -140,29 +120,10 @@ export class Transcriber {
       return;
     }
 
-    this.transitionTo(AppState.OUTPUT);
-    this.isProcessing.set(true);
-
     const filename = `recording_${Date.now()}.webm`;
-
-    this.transcriptionService.transcribeAudio(blob, filename).subscribe({
-      next: (result: TranscriptionResponse) => {
-        setTimeout(() => {
-          this.isProcessing.set(false);
-          this.inputText.set(result.original);
-          this.outputText.set(result.cleaned);
-          this.intelligentText.set(result.intelligent || result.cleaned);
-        }, 2000);
-      },
-      error: () => {
-        setTimeout(() => {
-          this.isProcessing.set(false);
-          this.inputText.set('');
-          this.outputText.set('Error processing audio. Please try again.');
-          this.intelligentText.set('');
-        }, 2000);
-      },
-    });
+    this.processWithTranscription(() =>
+      this.transcriptionService.transcribeAudio(blob, filename)
+    );
   }
 
   onProcessUploadedFile(): void {
@@ -171,27 +132,9 @@ export class Transcriber {
       return;
     }
 
-    this.transitionTo(AppState.OUTPUT);
-    this.isProcessing.set(true);
-
-    this.transcriptionService.transcribeAudio(file, file.name).subscribe({
-      next: (result: TranscriptionResponse) => {
-        setTimeout(() => {
-          this.isProcessing.set(false);
-          this.inputText.set(result.original);
-          this.outputText.set(result.cleaned);
-          this.intelligentText.set(result.intelligent || result.cleaned);
-        }, 2000);
-      },
-      error: () => {
-        setTimeout(() => {
-          this.isProcessing.set(false);
-          this.inputText.set('');
-          this.outputText.set('Error processing audio file. Please try again.');
-          this.intelligentText.set('');
-        }, 2000);
-      },
-    });
+    this.processWithTranscription(() =>
+      this.transcriptionService.transcribeAudio(file, file.name)
+    );
   }
 
   async onCopyOutput(): Promise<void> {
@@ -228,6 +171,32 @@ export class Transcriber {
     this.speakView.set(SpeakView.RECORDER);
     this.isProcessing.set(false);
     this.transitionTo(AppState.START);
+  }
+
+  private processWithTranscription(
+    transcriptionFn: () => ReturnType<typeof this.transcriptionService.cleanupText>
+  ): void {
+    this.transitionTo(AppState.OUTPUT);
+    this.isProcessing.set(true);
+
+    transcriptionFn().subscribe({
+      next: (result: TranscriptionResponse) => {
+        setTimeout(() => {
+          this.isProcessing.set(false);
+          this.inputText.set(result.original);
+          this.outputText.set(result.cleaned);
+          this.intelligentText.set(result.intelligent || result.cleaned);
+        }, 2000);
+      },
+      error: () => {
+        setTimeout(() => {
+          this.isProcessing.set(false);
+          this.inputText.set('');
+          this.outputText.set('Error processing. Please try again.');
+          this.intelligentText.set('');
+        }, 2000);
+      },
+    });
   }
 
   private transitionTo(state: AppState): void {

@@ -112,7 +112,7 @@ describe('Transcriber', () => {
       component.onProcessText();
 
       setTimeout(() => {
-        expect(component.outputText()).toContain('Error processing text');
+        expect(component.outputText()).toContain('Error processing');
         expect(component.isProcessing()).toBe(false);
         done();
       }, 2100);

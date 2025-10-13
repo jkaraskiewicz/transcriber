@@ -40,6 +40,7 @@
     <div class="flex space-x-8">
       <button class="choice-btn" (click)="onChooseType()">Type</button>
       <button class="choice-btn" (click)="onChooseSpeak()">Speak</button>
+      <button class="choice-btn" (click)="onChooseUpload()">Upload</button>
     </div>
   </div>
 
@@ -57,7 +58,46 @@
     </div>
   </div>
 
-  <!-- 4. Speak Input Screen -->
+  <!-- 4. Upload Input Screen -->
+  <div *ngIf="currentState() === AppState.UPLOAD_INPUT" class="screen fade-in">
+    <div class="flex flex-col items-center space-y-6">
+      <div class="upload-area">
+        <input
+          type="file"
+          accept="audio/wav,audio/mpeg,audio/mp3,audio/mp4,audio/m4a,audio/x-m4a,audio/webm,audio/ogg"
+          (change)="onFileSelected($event)"
+          class="hidden"
+          #fileInput
+        />
+        <button
+          *ngIf="!uploadedFile()"
+          class="choice-btn"
+          (click)="fileInput.click()"
+        >
+          Choose Audio File
+        </button>
+        
+        <div *ngIf="uploadedFile()" class="flex flex-col items-center space-y-4">
+          <p class="text-white/70 text-lg">{{ uploadedFile()?.name }}</p>
+          <p class="text-white/50 text-sm">
+            {{ (uploadedFile()?.size || 0) / 1024 / 1024 | number: '1.1-1' }} MB
+          </p>
+          <audio [src]="uploadedFileUrl()" controls class="audio-player"></audio>
+          <div class="flex space-x-4">
+            <button class="process-btn" (click)="onProcessUploadedFile()">Process</button>
+            <button class="choice-btn" (click)="fileInput.click()">Change File</button>
+          </div>
+        </div>
+      </div>
+      
+      <p class="text-white/40 text-sm text-center max-w-md">
+        Supported formats: WAV, MP3, M4A, WebM, OGG<br />
+        Maximum file size: 100 MB
+      </p>
+    </div>
+  </div>
+
+  <!-- 5. Speak Input Screen -->
   <div *ngIf="currentState() === AppState.SPEAK_INPUT" class="screen fade-in">
     <!-- Recorder UI -->
     <div *ngIf="speakView() === SpeakView.RECORDER" class="flex flex-col items-center">

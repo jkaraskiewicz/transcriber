@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-const ALLOWED_AUDIO_TYPES = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/webm', 'audio/ogg', 'audio/x-m4a'];
+const ALLOWED_AUDIO_TYPES = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/webm', 'audio/ogg', 'audio/x-m4a', 'audio/mp4', 'audio/m4a'];
 
 const storage = multer.memoryStorage();
 

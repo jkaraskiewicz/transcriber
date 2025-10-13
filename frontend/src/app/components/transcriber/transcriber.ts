@@ -9,6 +9,7 @@ enum AppState {
   CHOICE = 'choice',
   TYPE_INPUT = 'type-input',
   SPEAK_INPUT = 'speak-input',
+  UPLOAD_INPUT = 'upload-input',
   OUTPUT = 'output',
 }
 
@@ -40,6 +41,8 @@ export class Transcriber {
   readonly audioUrl = signal<string>('');
   readonly recordingTime = signal<number>(0);
   readonly isCopied = signal<boolean>(false);
+  readonly uploadedFile = signal<File | null>(null);
+  readonly uploadedFileUrl = signal<string>('');
 
   private timerInterval: number | null = null;
   private mediaRecorder: MediaRecorder | null = null;
@@ -67,6 +70,64 @@ export class Transcriber {
   async onChooseSpeak(): Promise<void> {
     this.transitionTo(AppState.SPEAK_INPUT);
     await this.startRecording();
+  }
+
+  onChooseUpload(): void {
+    this.transitionTo(AppState.UPLOAD_INPUT);
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      
+      // Validate file type
+      const allowedTypes = ['audio/wav', 'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/webm', 'audio/ogg'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Invalid file type. Please upload a WAV, MP3, M4A, WebM, or OGG audio file.');
+        return;
+      }
+
+      // Validate file size (100MB max)
+      const maxSize = 100 * 1024 * 1024;
+      if (file.size > maxSize) {
+        alert('File is too large. Maximum size is 100MB.');
+        return;
+      }
+
+      this.uploadedFile.set(file);
+      const fileUrl = URL.createObjectURL(file);
+      this.uploadedFileUrl.set(fileUrl);
+    }
+  }
+
+  onProcessUploadedFile(): void {
+    const file = this.uploadedFile();
+    if (!file) {
+      return;
+    }
+
+    this.transitionTo(AppState.OUTPUT);
+    this.isProcessing.set(true);
+
+    this.transcriptionService.transcribeAudio(file, file.name).subscribe({
+      next: (result: TranscriptionResponse) => {
+        setTimeout(() => {
+          this.isProcessing.set(false);
+          this.inputText.set(result.original);
+          this.outputText.set(result.cleaned);
+          this.intelligentText.set(result.intelligent || result.cleaned);
+        }, 2000);
+      },
+      error: () => {
+        setTimeout(() => {
+          this.isProcessing.set(false);
+          this.inputText.set('');
+          this.outputText.set('Error processing audio file. Please try again.');
+          this.intelligentText.set('');
+        }, 2000);
+      },
+    });
   }
 
   onProcessText(): void {
@@ -171,6 +232,8 @@ export class Transcriber {
     this.isCopied.set(false);
     this.speakView.set(SpeakView.RECORDER);
     this.isProcessing.set(false);
+    this.uploadedFile.set(null);
+    this.uploadedFileUrl.set('');
     this.transitionTo(AppState.START);
   }
 

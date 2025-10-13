@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     image: ghcr.io/jkaraskiewicz/transcriber-backend:latest
@@ -24,7 +22,7 @@ services:
     image: ghcr.io/jkaraskiewicz/transcriber-frontend:latest
     container_name: transcriber-frontend
     environment:
-      - BACKEND_URL=${BACKEND_URL:-/api}
+      - BACKEND_URL=${BACKEND_URL:-https://transcriber.karaskiewicz.com/api}
     ports:
       - "4206:80"
     networks:

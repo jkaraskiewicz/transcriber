@@ -34,6 +34,8 @@ export class Transcriber {
   readonly isProcessing = signal<boolean>(false);
   readonly inputText = signal<string>(''); // Original/raw text before Gemini processing
   readonly outputText = signal<string>(''); // Cleaned text after Gemini processing
+  readonly intelligentText = signal<string>(''); // Intelligently corrected text
+  readonly activeTab = signal<'clean' | 'intelligent'>('clean'); // Active output tab
   readonly audioBlob = signal<Blob | null>(null);
   readonly audioUrl = signal<string>('');
   readonly recordingTime = signal<number>(0);
@@ -82,6 +84,7 @@ export class Transcriber {
           this.isProcessing.set(false);
           this.inputText.set(result.original);
           this.outputText.set(result.cleaned);
+          this.intelligentText.set(result.intelligent || result.cleaned);
         }, 2000);
       },
       error: () => {
@@ -89,6 +92,7 @@ export class Transcriber {
           this.isProcessing.set(false);
           this.inputText.set('');
           this.outputText.set('Error processing text. Please try again.');
+          this.intelligentText.set('');
         }, 2000);
       },
     });
@@ -115,6 +119,7 @@ export class Transcriber {
           this.isProcessing.set(false);
           this.inputText.set(result.original);
           this.outputText.set(result.cleaned);
+          this.intelligentText.set(result.intelligent || result.cleaned);
         }, 2000);
       },
       error: () => {
@@ -122,13 +127,14 @@ export class Transcriber {
           this.isProcessing.set(false);
           this.inputText.set('');
           this.outputText.set('Error processing audio. Please try again.');
+          this.intelligentText.set('');
         }, 2000);
       },
     });
   }
 
   async onCopyOutput(): Promise<void> {
-    const text = this.outputText();
+    const text = this.activeTab() === 'clean' ? this.outputText() : this.intelligentText();
     if (!text) {
       return;
     }
@@ -146,12 +152,19 @@ export class Transcriber {
     }
   }
 
+  onTabChange(tab: 'clean' | 'intelligent'): void {
+    this.activeTab.set(tab);
+    this.isCopied.set(false); // Reset copy state when switching tabs
+  }
+
   onReset(): void {
     this.stopRecording();
     this.clearTimer();
     this.textInput.set('');
     this.inputText.set('');
     this.outputText.set('');
+    this.intelligentText.set('');
+    this.activeTab.set('clean');
     this.audioBlob.set(null);
     this.audioUrl.set('');
     this.recordingTime.set(0);

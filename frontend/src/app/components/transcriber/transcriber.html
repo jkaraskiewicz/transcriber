@@ -114,13 +114,27 @@
           </p>
         </div>
 
-        <!-- Output Text (Cleaned) -->
+        <!-- Output Tabs -->
         <div>
-          <div class="flex items-center justify-center gap-3 mb-2">
-            <p class="text-sm text-white/40 uppercase tracking-wider">Output</p>
+          <!-- Tab Headers -->
+          <div class="flex items-center justify-center gap-4 mb-4">
+            <button
+              (click)="onTabChange('clean')"
+              class="tab-btn"
+              [class.active]="activeTab() === 'clean'"
+            >
+              Clean
+            </button>
+            <button
+              (click)="onTabChange('intelligent')"
+              class="tab-btn"
+              [class.active]="activeTab() === 'intelligent'"
+            >
+              Smart
+            </button>
             <button
               (click)="onCopyOutput()"
-              class="copy-btn"
+              class="copy-btn ml-2"
               [class.copied]="isCopied()"
               aria-label="Copy to clipboard"
               title="Copy to clipboard"
@@ -155,8 +169,10 @@
               </svg>
             </button>
           </div>
+
+          <!-- Tab Content -->
           <p class="text-xl text-white/90 leading-relaxed font-medium">
-            {{ outputText() }}
+            {{ activeTab() === 'clean' ? outputText() : intelligentText() }}
           </p>
         </div>
       </div>

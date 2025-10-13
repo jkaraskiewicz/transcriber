@@ -5,6 +5,7 @@ export interface TranscriptionRequest {
 export interface TranscriptionResponse {
   original: string;
   cleaned: string;
+  intelligent?: string;
   message: string;
 }
 

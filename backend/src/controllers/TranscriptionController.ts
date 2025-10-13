@@ -43,16 +43,22 @@ export class TranscriptionController {
         rawLength: rawTranscription.length,
       });
 
-      const cleanedTranscription = await this.geminiService.cleanupTranscript(rawTranscription);
+      // Run both cleanup modes in parallel
+      const [cleanedTranscription, intelligentTranscription] = await Promise.all([
+        this.geminiService.cleanupTranscript(rawTranscription),
+        this.geminiService.intelligentCleanup(rawTranscription),
+      ]);
 
       logger.info('Cleanup completed', {
         filename: file.originalname,
         cleanedLength: cleanedTranscription.length,
+        intelligentLength: intelligentTranscription.length,
       });
 
       const response: TranscriptionResponse = {
         original: rawTranscription,
         cleaned: cleanedTranscription,
+        intelligent: intelligentTranscription,
         message: 'Transcription and cleanup completed successfully',
       };
 
@@ -82,16 +88,22 @@ export class TranscriptionController {
     });
 
     try {
-      const cleanedText = await this.geminiService.cleanupTranscript(text);
+      // Run both cleanup modes in parallel
+      const [cleanedText, intelligentText] = await Promise.all([
+        this.geminiService.cleanupTranscript(text),
+        this.geminiService.intelligentCleanup(text),
+      ]);
 
       logger.info('Text cleanup completed', {
         originalLength: text.length,
         cleanedLength: cleanedText.length,
+        intelligentLength: intelligentText.length,
       });
 
       const response: TranscriptionResponse = {
         original: text,
         cleaned: cleanedText,
+        intelligent: intelligentText,
         message: 'Text cleanup completed successfully',
       };
 

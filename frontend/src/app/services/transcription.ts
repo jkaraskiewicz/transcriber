@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 export interface TranscriptionResponse {
   original: string;
   cleaned: string;
+  intelligent?: string;
   message: string;
 }
 

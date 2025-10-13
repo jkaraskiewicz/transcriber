@@ -7,7 +7,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - WHISPER_API_URL=${WHISPER_API_URL:-http://192.168.1.100:9019}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     ports:
       - "3050:3001"

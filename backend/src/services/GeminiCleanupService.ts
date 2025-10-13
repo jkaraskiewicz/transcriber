@@ -74,37 +74,64 @@ ${rawTranscript}
   }
 
   private buildIntelligentPrompt(rawTranscript: string): string {
-    return `You are an expert transcript editor with deep linguistic understanding. Your task is to intelligently correct and clean up this raw speech transcription, making educated guesses about mistranscribed or misspoken words while preserving the original structure and meaning.
+    return `You are an expert transcript editor and linguistic analyst. Your task is to aggressively correct and reconstruct this poor-quality transcription, making it logically coherent and readable.
 
-**YOUR MISSION:**
-1. **Preserve structure and flow** - Follow the original speech structure, tone, and voice. Do NOT summarize or restructure unnecessarily.
-2. **Remove standard issues**: filler words (umm, uh, like, you know), pause markers, false starts, repetitions.
-3. **Fix grammar and sentence structure** to improve readability.
-4. **Intelligent word correction** - This is KEY:
-   - Detect words/phrases that are logically out of place or don't make sense in context
-   - Make educated guesses about what the speaker MEANT to say:
-     * Consider phonetically similar words that would make sense
-     * Consider the context and topic being discussed
-     * Look for transcription errors where similar-sounding words were confused
-   - If a word/phrase is beyond rescuing and breaks the sentence flow, remove it
-   - Mark uncertain corrections by keeping the flow natural (don't add brackets or notes)
+**CORE PRINCIPLES:**
+This transcription likely contains:
+- Mistranscribed words (speech recognition errors)
+- Misspoken or mispronounced words
+- Incomplete thoughts and sentence fragments
+- Words that sound similar but make no sense in context
+- Missing punctuation causing run-on confusion
 
-**EXAMPLES OF INTELLIGENT CORRECTION:**
-- "governmental program" → "government program" (if that makes more sense)
-- "pedestal up" → "goes up" or "increases" (phonetic similarity + context)
-- "customer suffer that you know money" → "customers who receive money" (structural correction)
-- "magazines somewhere like a lockers" → "storage facilities" or remove entirely if unclear
-- "to do a full of them" → remove or correct to "fool them" based on context
+Your job is to BE BOLD in fixing these issues while preserving the speaker's intended meaning and argument structure.
 
-**CRITICAL RULES:**
-- Maintain ALL important content and ideas
-- Keep the same level of detail
-- Don't make it overly formal - preserve the speaker's voice
-- Only correct words that clearly don't make sense
-- When in doubt between two interpretations, choose the one that fits the context better
-- Remove fragments only if they're truly incomprehensible
+**SPECIFIC INSTRUCTIONS:**
 
-The output should read like a well-formed, logical transcription where the speaker's intent is clear, even if some original words were mistranscribed or misspoken.
+1. **Aggressive Fragment Removal**
+   - Delete incomprehensible fragments at the start/end of sentences
+   - Examples to DELETE entirely:
+     * "Produce. Made, okay." (meaningless opening)
+     * Random timestamps or noise words
+     * Fragments that add no meaning: "you know", "like you know", "for some times"
+
+2. **Context-Aware Word Substitution**
+   - "pedestal up" → "goes up" (prices context)
+   - "customer suffer that you know money from" → "customers who receive money from"
+   - "governmental program" → "government program"
+   - "magazines somewhere like a lockers" → "warehouses" or "storage"
+   - "construction supporters" → "construction materials" or "construction supplies"
+   - "to do a full of them" → "to fool them"
+   - "presidential" (out of context) → remove or guess from context
+
+3. **Sentence Reconstruction**
+   - Fix run-on sentences by adding proper punctuation
+   - "pretty much okay" at end of sentence → "pretty much, okay?"
+   - Ensure sentences have clear subjects and predicates
+   - Merge fragments into complete thoughts when the connection is obvious
+
+4. **Question Detection**
+   - When the speaker seems to be asking a question (tone suggests it), end with "?"
+   - "how can that people..." → "how can people..." (fix grammar in questions)
+
+5. **Preserve Core Arguments**
+   - Keep the economic/political arguments intact
+   - Maintain the logical flow of reasoning
+   - Don't remove content that's part of the main argument
+
+**WHAT TO PRIORITIZE:**
+- Logical coherence > Literal transcription
+- Readable sentences > Preserving every word
+- Clear meaning > Exact word choice
+- Grammar correctness > Raw transcript
+
+**WHAT TO DELETE:**
+- Completely nonsensical opening/closing fragments
+- Repetitive false starts that add nothing
+- Filler phrases that break sentence flow
+- Words that are clearly transcription errors with no clear fix
+
+The goal is to produce text that reads like a fluent (though perhaps not perfectly polished) speaker discussing economics or politics, where every sentence makes sense and contributes to their argument.
 
 **Raw Transcription:**
 ---

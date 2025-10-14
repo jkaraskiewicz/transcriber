@@ -49,7 +49,7 @@
     <div class="w-full max-w-2xl text-center">
       <textarea
         [(ngModel)]="textInput"
-        class="w-full h-48 bg-transparent text-2xl text-center resize-none focus:outline-none placeholder-white/30 text-white"
+        class="input-textarea"
         placeholder="Type something..."
       ></textarea>
       <button *ngIf="canProcessText" class="process-btn mt-6" (click)="onProcessText()">
@@ -145,13 +145,13 @@
       </div>
 
       <!-- Results -->
-      <div *ngIf="!isProcessing()" class="space-y-6">
+      <div *ngIf="!isProcessing()" class="results-container">
         <!-- Input Text (Original) -->
-        <div *ngIf="inputText()" class="pb-6 border-b border-white/10">
+        <div *ngIf="inputText()" class="input-display-section">
           <p class="text-sm text-white/40 mb-2 uppercase tracking-wider">Input</p>
-          <p class="text-lg text-white/50 leading-relaxed italic">
+          <div class="input-display">
             {{ inputText() }}
-          </p>
+          </div>
         </div>
 
         <!-- Output Tabs -->
@@ -211,9 +211,9 @@
           </div>
 
           <!-- Tab Content -->
-          <p class="text-xl text-white/90 leading-relaxed font-medium">
+          <div class="output-display">
             {{ activeTab() === 'clean' ? outputText() : intelligentText() }}
-          </p>
+          </div>
         </div>
       </div>
     </div>

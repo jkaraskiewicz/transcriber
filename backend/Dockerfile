@@ -19,6 +19,9 @@ RUN npm run build
 # Production stage
 FROM node:20-alpine
 
+# Install ffmpeg from Alpine package manager (much faster than ffmpeg-static)
+RUN apk add --no-cache ffmpeg
+
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001

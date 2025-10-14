@@ -3,7 +3,6 @@ import ffmpeg from 'fluent-ffmpeg';
 
 // Mock fluent-ffmpeg
 jest.mock('fluent-ffmpeg');
-jest.mock('ffmpeg-static', () => '/path/to/ffmpeg');
 
 describe('AudioConversionService', () => {
   let service: AudioConversionService;

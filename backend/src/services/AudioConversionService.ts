@@ -1,11 +1,9 @@
 import ffmpeg from 'fluent-ffmpeg';
-import ffmpegStatic from 'ffmpeg-static';
 import { Readable } from 'stream';
 import { logger } from '../utils/logger';
 
-if (ffmpegStatic) {
-  ffmpeg.setFfmpegPath(ffmpegStatic);
-}
+// Use system ffmpeg (installed via Docker or package manager)
+// No need to set path - ffmpeg command will be available in PATH
 
 export interface ConvertedAudio {
   buffer: Buffer;

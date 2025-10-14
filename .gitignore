@@ -43,3 +43,5 @@ coverage/
 CRUSH.md
 PROGRAMMING.md
 UX.md
+
+test_data/

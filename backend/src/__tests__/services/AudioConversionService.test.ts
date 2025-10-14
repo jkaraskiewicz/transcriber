@@ -14,7 +14,6 @@ describe('AudioConversionService', () => {
     
     // Create mock ffmpeg instance with chainable methods
     mockFfmpegInstance = {
-      inputFormat: jest.fn().mockReturnThis(),
       audioCodec: jest.fn().mockReturnThis(),
       audioBitrate: jest.fn().mockReturnThis(),
       audioChannels: jest.fn().mockReturnThis(),
@@ -65,7 +64,6 @@ describe('AudioConversionService', () => {
       expect(result.buffer).toEqual(mockConvertedBuffer);
       expect(result.mimetype).toBe('audio/mpeg');
       expect(result.originalname).toBe('test.mp3');
-      expect(mockFfmpegInstance.inputFormat).toHaveBeenCalledWith('m4a');
       expect(mockFfmpegInstance.audioCodec).toHaveBeenCalledWith('libmp3lame');
       expect(mockFfmpegInstance.audioBitrate).toHaveBeenCalledWith('192k');
       expect(mockFfmpegInstance.audioChannels).toHaveBeenCalledWith(1);
@@ -99,7 +97,6 @@ describe('AudioConversionService', () => {
       const result = await service.convertToMp3(wavFile);
 
       expect(result.originalname).toBe('test.mp3');
-      expect(mockFfmpegInstance.inputFormat).toHaveBeenCalledWith('wav');
     });
 
     it('should handle WebM file conversion', async () => {
@@ -128,7 +125,6 @@ describe('AudioConversionService', () => {
       const result = await service.convertToMp3(webmFile);
 
       expect(result.originalname).toBe('test.mp3');
-      expect(mockFfmpegInstance.inputFormat).toHaveBeenCalledWith('webm');
     });
 
     it('should handle OGG file conversion', async () => {
@@ -157,7 +153,6 @@ describe('AudioConversionService', () => {
       const result = await service.convertToMp3(oggFile);
 
       expect(result.originalname).toBe('test.mp3');
-      expect(mockFfmpegInstance.inputFormat).toHaveBeenCalledWith('ogg');
     });
 
     it('should throw error when conversion fails', async () => {
@@ -205,33 +200,6 @@ describe('AudioConversionService', () => {
       expect(result.buffer).toEqual(Buffer.concat([chunk1, chunk2, chunk3]));
     });
 
-    it('should use default format for unknown mimetypes', async () => {
-      const unknownFile = {
-        ...mockFile,
-        originalname: 'test.unknown',
-        mimetype: 'audio/unknown',
-      } as Express.Multer.File;
 
-      mockFfmpegInstance.pipe.mockReturnValue({
-        on: jest.fn((event, callback) => {
-          if (event === 'data') {
-            callback(Buffer.from('converted data'));
-          }
-          return { on: jest.fn() };
-        }),
-      });
-
-      mockFfmpegInstance.on.mockImplementation((event: string, callback: any) => {
-        if (event === 'end') {
-          setTimeout(() => callback(), 0);
-        }
-        return mockFfmpegInstance;
-      });
-
-      await service.convertToMp3(unknownFile);
-
-      // Should default to mp3 format
-      expect(mockFfmpegInstance.inputFormat).toHaveBeenCalledWith('mp3');
-    });
   });
 });

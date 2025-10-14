@@ -26,7 +26,6 @@ export class AudioConversionService {
       const inputStream = Readable.from(file.buffer);
 
       ffmpeg(inputStream)
-        .inputFormat(this.getInputFormat(file.mimetype))
         .audioCodec('libmp3lame')
         .audioBitrate('192k')
         .audioChannels(1)
@@ -65,20 +64,5 @@ export class AudioConversionService {
     });
   }
 
-  private getInputFormat(mimetype: string): string {
-    const formatMap: Record<string, string> = {
-      'audio/wav': 'wav',
-      'audio/x-wav': 'wav',
-      'audio/mpeg': 'mp3',
-      'audio/mp3': 'mp3',
-      'audio/mp4': 'mp4',
-      'audio/m4a': 'm4a',
-      'audio/x-m4a': 'ipod',
-      'audio/webm': 'webm',
-      'audio/ogg': 'ogg',
-      'audio/opus': 'opus',
-    };
 
-    return formatMap[mimetype] || 'mp3';
-  }
 }

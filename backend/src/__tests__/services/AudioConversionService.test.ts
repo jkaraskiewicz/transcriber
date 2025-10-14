@@ -1,8 +1,10 @@
 import { AudioConversionService } from '../../services/AudioConversionService';
 import ffmpeg from 'fluent-ffmpeg';
+import { writeFile, unlink, readFile } from 'fs/promises';
 
-// Mock fluent-ffmpeg
+// Mock fluent-ffmpeg and fs/promises
 jest.mock('fluent-ffmpeg');
+jest.mock('fs/promises');
 
 describe('AudioConversionService', () => {
   let service: AudioConversionService;
@@ -10,7 +12,7 @@ describe('AudioConversionService', () => {
 
   beforeEach(() => {
     service = new AudioConversionService();
-    
+
     // Create mock ffmpeg instance with chainable methods
     mockFfmpegInstance = {
       audioCodec: jest.fn().mockReturnThis(),
@@ -19,12 +21,15 @@ describe('AudioConversionService', () => {
       audioFrequency: jest.fn().mockReturnThis(),
       format: jest.fn().mockReturnThis(),
       on: jest.fn().mockReturnThis(),
-      pipe: jest.fn().mockReturnValue({
-        on: jest.fn(),
-      }),
+      save: jest.fn(),
     };
 
     (ffmpeg as unknown as jest.Mock).mockReturnValue(mockFfmpegInstance);
+
+    // Mock fs/promises functions
+    (writeFile as jest.Mock).mockResolvedValue(undefined);
+    (unlink as jest.Mock).mockResolvedValue(undefined);
+
     jest.clearAllMocks();
   });
 
@@ -39,20 +44,12 @@ describe('AudioConversionService', () => {
     it('should successfully convert audio to MP3', async () => {
       const mockConvertedBuffer = Buffer.from('converted mp3 data');
 
-      // Setup mock to emit 'end' event and collect chunks
-      mockFfmpegInstance.pipe.mockReturnValue({
-        on: jest.fn((event, callback) => {
-          if (event === 'data') {
-            // Simulate data chunks
-            callback(mockConvertedBuffer);
-          }
-          return { on: jest.fn() };
-        }),
-      });
+      // Mock readFile to return the converted buffer
+      (readFile as jest.Mock).mockResolvedValue(mockConvertedBuffer);
 
+      // Setup mock to emit 'end' event
       mockFfmpegInstance.on.mockImplementation((event: string, callback: any) => {
         if (event === 'end') {
-          // Trigger end event immediately
           setTimeout(() => callback(), 0);
         }
         return mockFfmpegInstance;
@@ -68,6 +65,10 @@ describe('AudioConversionService', () => {
       expect(mockFfmpegInstance.audioChannels).toHaveBeenCalledWith(1);
       expect(mockFfmpegInstance.audioFrequency).toHaveBeenCalledWith(16000);
       expect(mockFfmpegInstance.format).toHaveBeenCalledWith('mp3');
+      expect(mockFfmpegInstance.save).toHaveBeenCalled();
+      expect(writeFile).toHaveBeenCalled();
+      expect(readFile).toHaveBeenCalled();
+      expect(unlink).toHaveBeenCalledTimes(2); // Clean up both temp files
     });
 
     it('should handle WAV file conversion', async () => {
@@ -77,14 +78,7 @@ describe('AudioConversionService', () => {
         mimetype: 'audio/wav',
       } as Express.Multer.File;
 
-      mockFfmpegInstance.pipe.mockReturnValue({
-        on: jest.fn((event, callback) => {
-          if (event === 'data') {
-            callback(Buffer.from('converted data'));
-          }
-          return { on: jest.fn() };
-        }),
-      });
+      (readFile as jest.Mock).mockResolvedValue(Buffer.from('converted data'));
 
       mockFfmpegInstance.on.mockImplementation((event: string, callback: any) => {
         if (event === 'end') {
@@ -105,14 +99,7 @@ describe('AudioConversionService', () => {
         mimetype: 'audio/webm',
       } as Express.Multer.File;
 
-      mockFfmpegInstance.pipe.mockReturnValue({
-        on: jest.fn((event, callback) => {
-          if (event === 'data') {
-            callback(Buffer.from('converted data'));
-          }
-          return { on: jest.fn() };
-        }),
-      });
+      (readFile as jest.Mock).mockResolvedValue(Buffer.from('converted data'));
 
       mockFfmpegInstance.on.mockImplementation((event: string, callback: any) => {
         if (event === 'end') {
@@ -133,14 +120,7 @@ describe('AudioConversionService', () => {
         mimetype: 'audio/ogg',
       } as Express.Multer.File;
 
-      mockFfmpegInstance.pipe.mockReturnValue({
-        on: jest.fn((event, callback) => {
-          if (event === 'data') {
-            callback(Buffer.from('converted data'));
-          }
-          return { on: jest.fn() };
-        }),
-      });
+      (readFile as jest.Mock).mockResolvedValue(Buffer.from('converted data'));
 
       mockFfmpegInstance.on.mockImplementation((event: string, callback: any) => {
         if (event === 'end') {
@@ -157,6 +137,9 @@ describe('AudioConversionService', () => {
     it('should throw error when conversion fails', async () => {
       const errorMessage = 'FFmpeg conversion failed';
 
+      // Need to make sure writeFile succeeds so we get to the ffmpeg error
+      (readFile as jest.Mock).mockResolvedValue(Buffer.from('data'));
+
       mockFfmpegInstance.on.mockImplementation((event: string, callback: any) => {
         if (event === 'error') {
           // Trigger error event immediately
@@ -168,24 +151,16 @@ describe('AudioConversionService', () => {
       await expect(service.convertToMp3(mockFile)).rejects.toThrow(
         `Audio conversion failed: ${errorMessage}`
       );
+
+      // Verify cleanup was attempted (2 calls for both temp files)
+      expect(unlink).toHaveBeenCalled();
     });
 
-    it('should handle multiple data chunks', async () => {
-      const chunk1 = Buffer.from('chunk1');
-      const chunk2 = Buffer.from('chunk2');
-      const chunk3 = Buffer.from('chunk3');
+    it('should handle read file errors gracefully', async () => {
+      const readError = new Error('Failed to read output file');
 
-      mockFfmpegInstance.pipe.mockReturnValue({
-        on: jest.fn((event, callback) => {
-          if (event === 'data') {
-            // Simulate multiple chunks
-            callback(chunk1);
-            callback(chunk2);
-            callback(chunk3);
-          }
-          return { on: jest.fn() };
-        }),
-      });
+      // First call to readFile (inside the 'end' handler) should fail
+      (readFile as jest.Mock).mockRejectedValue(readError);
 
       mockFfmpegInstance.on.mockImplementation((event: string, callback: any) => {
         if (event === 'end') {
@@ -194,11 +169,12 @@ describe('AudioConversionService', () => {
         return mockFfmpegInstance;
       });
 
-      const result = await service.convertToMp3(mockFile);
+      await expect(service.convertToMp3(mockFile)).rejects.toThrow(
+        'Failed to read converted audio file'
+      );
 
-      expect(result.buffer).toEqual(Buffer.concat([chunk1, chunk2, chunk3]));
+      // Verify cleanup was attempted
+      expect(unlink).toHaveBeenCalled();
     });
-
-
   });
 });

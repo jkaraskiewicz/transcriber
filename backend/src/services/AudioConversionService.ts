@@ -1,5 +1,7 @@
 import ffmpeg from 'fluent-ffmpeg';
-import { Readable } from 'stream';
+import { writeFile, unlink } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { logger } from '../utils/logger';
 
 // Use system ffmpeg (installed via Docker or package manager)
@@ -19,48 +21,69 @@ export class AudioConversionService {
       size: file.size,
     });
 
+    // Write buffer to temp file so ffmpeg can auto-detect format
+    const tempInputPath = join(tmpdir(), `input-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+    const tempOutputPath = join(tmpdir(), `output-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.mp3`);
+
+    try {
+      await writeFile(tempInputPath, file.buffer);
+    } catch (error) {
+      logger.error('Failed to write temp file', error);
+      await unlink(tempInputPath).catch(() => {});
+      throw new Error('Failed to prepare audio file for conversion');
+    }
+
     return new Promise((resolve, reject) => {
-      const chunks: Buffer[] = [];
-      const inputStream = Readable.from(file.buffer);
+        ffmpeg(tempInputPath)
+          .audioCodec('libmp3lame')
+          .audioBitrate('192k')
+          .audioChannels(1)
+          .audioFrequency(16000)
+          .format('mp3')
+          .on('start', (commandLine) => {
+            logger.debug('FFmpeg process started', { command: commandLine });
+          })
+          .on('progress', (progress) => {
+            logger.debug('Conversion progress', progress);
+          })
+          .on('error', async (err) => {
+            logger.error('Audio conversion failed', err, {
+              filename: file.originalname,
+            });
+            // Clean up temp files
+            await unlink(tempInputPath).catch(() => {});
+            await unlink(tempOutputPath).catch(() => {});
+            reject(new Error(`Audio conversion failed: ${err.message}`));
+          })
+          .on('end', async () => {
+            try {
+              // Read converted file
+              const fs = await import('fs/promises');
+              const convertedBuffer = await fs.readFile(tempOutputPath);
 
-      ffmpeg(inputStream)
-        .audioCodec('libmp3lame')
-        .audioBitrate('192k')
-        .audioChannels(1)
-        .audioFrequency(16000)
-        .format('mp3')
-        .on('start', (commandLine) => {
-          logger.debug('FFmpeg process started', { command: commandLine });
-        })
-        .on('progress', (progress) => {
-          logger.debug('Conversion progress', progress);
-        })
-        .on('error', (err) => {
-          logger.error('Audio conversion failed', err, {
-            filename: file.originalname,
-          });
-          reject(new Error(`Audio conversion failed: ${err.message}`));
-        })
-        .on('end', () => {
-          const convertedBuffer = Buffer.concat(chunks);
-          logger.info('Audio conversion completed', {
-            filename: file.originalname,
-            originalSize: file.size,
-            convertedSize: convertedBuffer.length,
-          });
+              logger.info('Audio conversion completed', {
+                filename: file.originalname,
+                originalSize: file.size,
+                convertedSize: convertedBuffer.length,
+              });
 
-          resolve({
-            buffer: convertedBuffer,
-            mimetype: 'audio/mpeg',
-            originalname: file.originalname.replace(/\.[^.]+$/, '.mp3'),
-          });
-        })
-        .pipe()
-        .on('data', (chunk: Buffer) => {
-          chunks.push(chunk);
-        });
+              // Clean up temp files
+              await unlink(tempInputPath).catch(() => {});
+              await unlink(tempOutputPath).catch(() => {});
+
+              resolve({
+                buffer: convertedBuffer,
+                mimetype: 'audio/mpeg',
+                originalname: file.originalname.replace(/\.[^.]+$/, '.mp3'),
+              });
+            } catch (readError) {
+              logger.error('Failed to read converted file', readError);
+              await unlink(tempInputPath).catch(() => {});
+              await unlink(tempOutputPath).catch(() => {});
+              reject(new Error('Failed to read converted audio file'));
+            }
+          })
+          .save(tempOutputPath);
     });
   }
-
-
 }

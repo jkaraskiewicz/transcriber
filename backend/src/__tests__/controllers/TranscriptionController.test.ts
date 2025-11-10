@@ -1,26 +1,28 @@
 import { Request, Response } from 'express';
 import { TranscriptionController } from '../../controllers/TranscriptionController';
 import { WhisperTranscriptionService } from '../../services/WhisperTranscriptionService';
-import { GeminiCleanupService } from '../../services/GeminiCleanupService';
+import { ICleanupService } from '../../services/ICleanupService';
 
 // Mock the services
 jest.mock('../../services/WhisperTranscriptionService');
-jest.mock('../../services/GeminiCleanupService');
 
 describe('TranscriptionController', () => {
   let controller: TranscriptionController;
   let mockWhisperService: jest.Mocked<WhisperTranscriptionService>;
-  let mockGeminiService: jest.Mocked<GeminiCleanupService>;
+  let mockCleanupService: jest.Mocked<ICleanupService>;
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
 
   beforeEach(() => {
     // Create mock services
     mockWhisperService = new WhisperTranscriptionService('http://test') as jest.Mocked<WhisperTranscriptionService>;
-    mockGeminiService = new GeminiCleanupService('test-key', 'test-model') as jest.Mocked<GeminiCleanupService>;
+    mockCleanupService = {
+      cleanupTranscript: jest.fn(),
+      intelligentCleanup: jest.fn(),
+    } as jest.Mocked<ICleanupService>;
 
     // Initialize controller with mocks
-    controller = new TranscriptionController(mockWhisperService, mockGeminiService);
+    controller = new TranscriptionController(mockWhisperService, mockCleanupService);
 
     // Setup response mock
     mockResponse = {
@@ -51,14 +53,14 @@ describe('TranscriptionController', () => {
 
     it('should successfully transcribe and cleanup audio', async () => {
       mockWhisperService.transcribe = jest.fn().mockResolvedValue(mockRawTranscription);
-      mockGeminiService.cleanupTranscript = jest.fn().mockResolvedValue(mockCleanedTranscription);
-      mockGeminiService.intelligentCleanup = jest.fn().mockResolvedValue(mockIntelligentTranscription);
+      mockCleanupService.cleanupTranscript = jest.fn().mockResolvedValue(mockCleanedTranscription);
+      mockCleanupService.intelligentCleanup = jest.fn().mockResolvedValue(mockIntelligentTranscription);
 
       await controller.transcribeAudio(mockRequest as Request, mockResponse as Response);
 
       expect(mockWhisperService.transcribe).toHaveBeenCalledWith(mockFile);
-      expect(mockGeminiService.cleanupTranscript).toHaveBeenCalledWith(mockRawTranscription);
-      expect(mockGeminiService.intelligentCleanup).toHaveBeenCalledWith(mockRawTranscription);
+      expect(mockCleanupService.cleanupTranscript).toHaveBeenCalledWith(mockRawTranscription);
+      expect(mockCleanupService.intelligentCleanup).toHaveBeenCalledWith(mockRawTranscription);
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith({
         original: mockRawTranscription,
@@ -78,7 +80,7 @@ describe('TranscriptionController', () => {
         error: 'No audio file provided',
       });
       expect(mockWhisperService.transcribe).not.toHaveBeenCalled();
-      expect(mockGeminiService.cleanupTranscript).not.toHaveBeenCalled();
+      expect(mockCleanupService.cleanupTranscript).not.toHaveBeenCalled();
     });
 
     it('should handle Whisper transcription errors', async () => {
@@ -92,14 +94,14 @@ describe('TranscriptionController', () => {
         error: 'Transcription failed',
         message: errorMessage,
       });
-      expect(mockGeminiService.cleanupTranscript).not.toHaveBeenCalled();
+      expect(mockCleanupService.cleanupTranscript).not.toHaveBeenCalled();
     });
 
-    it('should handle Gemini cleanup errors', async () => {
-      const errorMessage = 'Gemini service error';
+    it('should handle cleanup service errors', async () => {
+      const errorMessage = 'Cleanup service error';
       mockWhisperService.transcribe = jest.fn().mockResolvedValue(mockRawTranscription);
-      mockGeminiService.cleanupTranscript = jest.fn().mockRejectedValue(new Error(errorMessage));
-      mockGeminiService.intelligentCleanup = jest.fn().mockResolvedValue(mockIntelligentTranscription);
+      mockCleanupService.cleanupTranscript = jest.fn().mockRejectedValue(new Error(errorMessage));
+      mockCleanupService.intelligentCleanup = jest.fn().mockResolvedValue(mockIntelligentTranscription);
 
       await controller.transcribeAudio(mockRequest as Request, mockResponse as Response);
 
@@ -136,7 +138,7 @@ describe('TranscriptionController', () => {
         timestamp: expect.any(String),
         services: {
           whisper: 'available',
-          gemini: 'configured',
+          cleanup: 'configured',
         },
       });
     });
@@ -153,7 +155,7 @@ describe('TranscriptionController', () => {
         timestamp: expect.any(String),
         services: {
           whisper: 'unavailable',
-          gemini: 'configured',
+          cleanup: 'configured',
         },
       });
     });

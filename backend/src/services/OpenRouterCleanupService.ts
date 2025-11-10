@@ -1,13 +1,42 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { logger } from '../utils/logger';
 import { ICleanupService } from './ICleanupService';
 
-export class GeminiCleanupService implements ICleanupService {
-  private genAI: GoogleGenerativeAI;
+interface OpenRouterMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
+interface OpenRouterRequest {
+  model: string;
+  messages: OpenRouterMessage[];
+  temperature?: number;
+  max_tokens?: number;
+}
+
+interface OpenRouterResponse {
+  id: string;
+  model: string;
+  choices: {
+    message: {
+      role: string;
+      content: string;
+    };
+    finish_reason: string;
+  }[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+export class OpenRouterCleanupService implements ICleanupService {
+  private apiKey: string;
   private model: string;
+  private apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
 
   constructor(apiKey: string, model: string) {
-    this.genAI = new GoogleGenerativeAI(apiKey);
+    this.apiKey = apiKey;
     this.model = model;
   }
 
@@ -20,33 +49,69 @@ export class GeminiCleanupService implements ICleanupService {
   }
 
   private async processTranscript(rawTranscript: string, mode: 'cleanup' | 'intelligent'): Promise<string> {
-    logger.debug(`Starting transcript ${mode} with Gemini`, {
+    logger.debug(`Starting transcript ${mode} with OpenRouter`, {
       transcriptLength: rawTranscript.length,
+      model: this.model,
     });
 
     try {
-      const model = this.genAI.getGenerativeModel({ model: this.model });
       const prompt = mode === 'cleanup'
         ? this.buildCleanupPrompt(rawTranscript)
         : this.buildIntelligentPrompt(rawTranscript);
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const cleaned = response.text().trim();
+      const requestBody: OpenRouterRequest = {
+        model: this.model,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 4096,
+      };
 
-      if (!cleaned || cleaned.length === 0) {
-        throw new Error('Empty response from Gemini');
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+          'HTTP-Referer': 'https://github.com/jkaraskiewicz/transcriber',
+          'X-Title': 'Transcriber Cleanup Service',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenRouter API error: ${response.status} ${errorText}`);
       }
 
-      logger.debug(`Gemini ${mode} completed`, {
+      const data = await response.json() as OpenRouterResponse;
+
+      if (!data.choices || data.choices.length === 0) {
+        throw new Error('No response from OpenRouter API');
+      }
+
+      const cleaned = data.choices[0].message.content.trim();
+
+      if (!cleaned || cleaned.length === 0) {
+        throw new Error('Empty response from OpenRouter');
+      }
+
+      logger.debug(`OpenRouter ${mode} completed`, {
         originalLength: rawTranscript.length,
         cleanedLength: cleaned.length,
+        model: this.model,
+        tokensUsed: data.usage?.total_tokens,
       });
 
       return cleaned;
     } catch (error) {
-      logger.error(`Gemini ${mode} failed`, error);
-      throw new Error(`Failed to ${mode} transcript with Gemini`);
+      logger.error(`OpenRouter ${mode} failed`, error, {
+        model: this.model,
+      });
+      throw new Error(`Failed to ${mode} transcript with OpenRouter`);
     }
   }
 

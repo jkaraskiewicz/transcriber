@@ -12,8 +12,11 @@ export interface TranscriptionResponse {
 export interface ServiceConfig {
   port: number;
   whisperUrl: string;
-  geminiApiKey: string;
-  geminiModel: string;
+  cleanupProvider: 'gemini' | 'openrouter';
+  geminiApiKey?: string;
+  geminiModel?: string;
+  openrouterApiKey?: string;
+  openrouterModel?: string;
 }
 
 export interface WhisperResponse {

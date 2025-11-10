@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
 import { WhisperTranscriptionService } from '../services/WhisperTranscriptionService';
-import { GeminiCleanupService } from '../services/GeminiCleanupService';
+import { ICleanupService } from '../services/ICleanupService';
 import { TranscriptionResponse } from '../types';
 import { logger } from '../utils/logger';
 
 export class TranscriptionController {
   constructor(
     private whisperService: WhisperTranscriptionService,
-    private geminiService: GeminiCleanupService
+    private cleanupService: ICleanupService
   ) {}
 
   healthCheck = async (_req: Request, res: Response): Promise<void> => {
@@ -18,7 +18,7 @@ export class TranscriptionController {
       timestamp: new Date().toISOString(),
       services: {
         whisper: whisperAvailable ? 'available' : 'unavailable',
-        gemini: 'configured',
+        cleanup: 'configured',
       },
     });
   };
@@ -45,8 +45,8 @@ export class TranscriptionController {
 
       // Run both cleanup modes in parallel
       const [cleanedTranscription, intelligentTranscription] = await Promise.all([
-        this.geminiService.cleanupTranscript(rawTranscription),
-        this.geminiService.intelligentCleanup(rawTranscription),
+        this.cleanupService.cleanupTranscript(rawTranscription),
+        this.cleanupService.intelligentCleanup(rawTranscription),
       ]);
 
       logger.info('Cleanup completed', {
@@ -90,8 +90,8 @@ export class TranscriptionController {
     try {
       // Run both cleanup modes in parallel
       const [cleanedText, intelligentText] = await Promise.all([
-        this.geminiService.cleanupTranscript(text),
-        this.geminiService.intelligentCleanup(text),
+        this.cleanupService.cleanupTranscript(text),
+        this.cleanupService.intelligentCleanup(text),
       ]);
 
       logger.info('Text cleanup completed', {
